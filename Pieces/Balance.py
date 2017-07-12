@@ -8,16 +8,16 @@ from Functions.Game_Functions import Get_Current_Piece,White_Lotus_Check,Draft_T
 
 class Balance(Piece):
 
-	def legal_ability(self,Pieces,Turn_Indicator):
+	def legal_ability(self,Pieces,Board):
 		temp = False
 		for piece in Pieces:
 			if piece.controller != self.controller and not(piece.loc_type in ['draft','hand','goal','nutral_zone']):
 				temp = True
 		if temp ==False:
 			return False
-		return Piece.legal_ability(self,Pieces,Turn_Indicator)
+		return Piece.legal_ability(self,Pieces,Board)
 
-	def ability(self,Pieces,Turn_Indicator,*args):
+	def ability(self,Pieces,Board,*args):
 		while True:
 			for event in pg.event.get():
 				if event.type == pg.QUIT:
@@ -35,9 +35,6 @@ class Balance(Piece):
 							temp_loc = self.loc
 							self.loc=current_piece.loc
 							self.loc_type=current_piece.loc_type
-							current_piece.move(temp_loc,Pieces)
-							self.unselect(Pieces)
+							current_piece.move(temp_loc,Pieces,Board)
+							self.unselect(Pieces,Board)
 							return True
-balance_move = 'Movement: Two paces in vertical or horizontal directions'
-balance_ability = 'Ability: Instead of moving can swap places witth an enemy piece not in the goal or nutral zone'
-Balance = Balance('Balance',draw_text_piece('Bal',(96,96,96)),Draft_To_Pix([5,1]),rook_move,True,'a',balance_move,balance_ability)

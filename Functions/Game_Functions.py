@@ -1,68 +1,53 @@
 import pygame as pg
 from math import floor, ceil
-from Functions.UI_tools import pop_up
 
+#Only used in creating of the board
+def Grid_To_Pix(x,y,width):
+	cell_dim = int(ceil(2*round((float(width)/2-11)/11)+1)/2)
+	height = 11*cell_dim+11
+	board_start = width-height
+	return [int(board_start+(cell_dim+1)*x),int(height-(cell_dim+1)*y)]
 
-def Grid_To_Pix(x,y):
-	return [int(807+72*x),int(793-72*y)]
+def Cell_To_Pix(loc,Board):
+	return [int(Board.board_start+(Board.cell_dim+1)*(loc[0]-1)),int(Board.height-(Board.cell_dim+1)*loc[1])]
 
-def Cell_To_Pix(x,y,*arg):
-	if len(arg)==0:
-		return [int(807+32+72*(x-1)),int(793-32-72*(y-1))]
-	else:
-		if arg[0]=='c':
-			return [807+32+72*(x-1),793-32-72*(y-1)]
-		if arg[0]=='ul':
-			return Grid_To_Pix(int(x-1),int(y))
-		if arg[0]=='ll':
-			return Grid_To_Pix(x-1,y-1)
-		if arg[0]=='ur':
-			return Grid_To_Pix(x,y)
-		if arg[0]=='lr':
-			return Grid_To_Pix(x,y-1)
+def Draft_To_Pix(pos,Board):
+	gap = int(round((float(Board.height)/2-4*Board.cell_dim)/5))
+	return[Board.cell_dim*(pos[0]-1),int(round(float(Board.height)/4))+gap+(gap+Board.cell_dim)*(pos[1]-1)]
 
-def Draft_To_Pix(pos):
-	return[71*(pos[0]-1),793-(198+94*pos[1])]
-
-def Hand_To_Pix(player,position):
+def Hand_To_Pix(player,position,Board):
 	if player == 1:
-		return [int(71*(position-1)),int(19+71)]
+		return [int(Board.cell_dim*(position-1)),int(round(float(Board.height)/4))-Board.cell_dim]
 	if player ==0:
-		return [int(71*(position-1)),198+2*199+19]
+		return [int(Board.cell_dim*(position-1)),int(round(3*float(Board.height)/4))]
 
-def Pix_To_Hand(loc):
-	return round(loc[0]/71+1)
+def Pix_To_Hand(loc,cell_dim):
+	return round(loc[0]/cell_dim+1)
 
 def Get_Current_Piece(mouse_pos,Pieces):
 	for piece in Pieces.sprites():
 		if piece.rect.collidepoint(mouse_pos):
 			return piece
 
-def Loc_To_UL(loc):
-	if loc[0]<807:
+def Loc_To_UL(loc,Board):
+	if loc[0]<Board.board_start:
 		UL=None
 	else:
-		x = 807+floor((loc[0]-807)/72)*72
-		y = 793-(ceil((793-loc[1])/72)+1)*72
+		x = Board.board_start+floor(float(loc[0]-Board.board_start)/(Board.cell_dim+1))*(Board.cell_dim+1)
+		y = floor(float(loc[1])/(Board.cell_dim+1))*(Board.cell_dim+1)
 		UL=[int(x),int(y)]
 	return UL
 
-def Loc_To_Grid(loc):
+def Loc_To_Cell(loc,Board):
 	x=loc[0]
 	y=loc[1]
-	return [int(floor((x-807)/72)+1),int(11-floor((y-1)/72))]
+	return [int(floor((x-Board.board_start)/(Board.cell_dim+1)+1)),int(11-floor(float(y)/(Board.cell_dim+1)))]
 
-def Loc_To_Cell(loc):
-	x=loc[0]
-	y=loc[1]
-	return [int(floor((x-807)/72)+1),int(11-floor((y-1)/72))]
-
-def Straight_Line_Intersection(loc,Pieces,direction):
-	pos = Loc_To_Cell(loc)
+def Straight_Line_Intersection(pos,Pieces,direction,Board):
 	i=1
 	while True:
 		#print 'now checking Cell: ' + str([pos[0]+direction[0]*i,pos[1]+direction[1]*i])
-		temp = Cell_To_Pix(pos[0]+direction[0]*i,pos[1]+direction[1]*i,'ul')
+		temp = Cell_To_Pix([pos[0]+direction[0]*i,pos[1]+direction[1]*i],Board)
 		for piece in Pieces:
 			if piece.loc == temp:
 				return piece
@@ -70,16 +55,12 @@ def Straight_Line_Intersection(loc,Pieces,direction):
 			return None
 		i=i+1
 
-def All_Straight_Line_Intersections(loc,Pieces):
+def All_Straight_Line_Intersections(pos,Pieces,Board):
 	list_of_pieces = []
 	list_of_directions =[]
 	possible_directions = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]]
 	for direction in possible_directions:
-		temp = Straight_Line_Intersection(loc,Pieces,direction)
-		#if temp == None:
-		#	print 'In direction ' +str(direction)+' there are no interections'
-		#else:
-		#	print 'In direction ' +str(direction)+' we intersenct '+temp.name
+		temp = Straight_Line_Intersection(pos,Pieces,direction,Board)
 		if temp!=None:
 			list_of_pieces.append(temp)
 			list_of_directions.append(direction)
@@ -91,59 +72,60 @@ def Is_Adjacent(pos1,pos2):
 			return True
 	return False
 
-
-def Check_If_Blocked(current_piece,target_grid,Pieces):
-	out = False
-	self_grid = Loc_To_Grid(current_piece.loc)
-	if target_grid[0]-self_grid[0]==0:
+def Get_Direction(pos1,pos2):
+	if pos2[0]-pos1[0]==0:
 		x_direction = 0
-	elif target_grid[0]-self_grid[0]<0:
+	elif pos2[0]-pos1[0]<0:
 		x_direction = -1
-	elif target_grid[0]-self_grid[0]>0:
+	elif pos2[0]-pos1[0]>0:
 		x_direction = 1
-	if target_grid[1]-self_grid[1]==0:
+	if pos2[1]-pos1[1]==0:
 		y_direction = 0
-	elif target_grid[1]-self_grid[1]<0:
+	elif pos2[1]-pos1[1]<0:
 		y_direction = -1
-	elif target_grid[1]-self_grid[1]>0:
+	elif pos2[1]-pos1[1]>0:
 		y_direction = 1
+	return [x_direction,y_direction]
+
+def Check_If_Blocked(current_piece,target_pos,Pieces):
+	out = False
+	self_pos = current_piece.pos
+	direction = Get_Direction(self_pos,target_pos)
 	search=[]
-	temp = [self_grid[0]+x_direction,self_grid[1]+y_direction]
-	while temp !=target_grid:
+	temp = [self_pos[0]+direction[0],self_pos[1]+direction[1]]
+	while temp !=target_pos:
 		search.append([int(temp[0]),int(temp[1])])
-		temp = [temp[0]+x_direction,temp[1]+y_direction]
+		temp = [temp[0]+direction[0],temp[1]+direction[1]]
 	for piece in Pieces:
-		piece_grid = Loc_To_Grid(piece.loc)
-		if piece_grid in search:
+		if piece.pos in search:
 			out = True
 	return out
 
-def Find_Zone(loc):
-	loc_grid = Loc_To_Grid(loc)
+def Find_Zone(pos):
 	place_zone = [[1,1],[1,11],[11,11],[11,1]]
 	for i in range(2,11):
 		place_zone=place_zone+[[1,i],[i,1],[i,11],[11,i]]
-	if loc_grid in place_zone:
+	if pos in place_zone:
 		return 'place_zone'
-	elif loc_grid in [[6,6]]:
+	elif pos in [[6,6]]:
 		return 'goal'
-	elif loc_grid in [[5,4],[6,4],[7,4],[4,5],[5,5],[6,5],[7,5],[8,5],[4,6],[5,6],[7,6],[8,6],[5,8],[6,8],[7,8],[4,7],[5,7],[6,7],[7,7],[8,7]]:
+	elif pos in [[5,4],[6,4],[7,4],[4,5],[5,5],[6,5],[7,5],[8,5],[4,6],[5,6],[7,6],[8,6],[5,8],[6,8],[7,8],[4,7],[5,7],[6,7],[7,7],[8,7]]:
 		return 'nutral_zone'
-	elif loc_grid in [[8,8],[8,9],[8,10],[9,8],[9,9],[9,10],[10,8],[10,9],[10,10]]:
+	elif pos in [[8,8],[8,9],[8,10],[9,8],[9,9],[9,10],[10,8],[10,9],[10,10]]:
 		return 't1'
-	elif loc_grid in [[9,5],[9,6],[9,7],[10,5],[10,6],[10,7]]:
+	elif pos in [[9,5],[9,6],[9,7],[10,5],[10,6],[10,7]]:
 		return 't2'
-	elif loc_grid in [[5,3],[6,3],[7,3],[5,2],[6,2],[7,2]]:
+	elif pos in [[5,3],[6,3],[7,3],[5,2],[6,2],[7,2]]:
 		return 't3'
-	elif loc_grid in [[8,4],[9,4],[10,4],[8,3],[9,3],[10,3],[8,2],[9,2],[10,2]]:
+	elif pos in [[8,4],[9,4],[10,4],[8,3],[9,3],[10,3],[8,2],[9,2],[10,2]]:
 		return 't4'
-	elif loc_grid in [[2,2],[3,2],[4,2],[2,3],[3,3],[4,3],[2,4],[3,4],[4,4]]:
+	elif pos in [[2,2],[3,2],[4,2],[2,3],[3,3],[4,3],[2,4],[3,4],[4,4]]:
 		return 't5'
-	elif loc_grid in [[2,5],[2,6],[2,7],[3,5],[3,6],[3,7]]:
+	elif pos in [[2,5],[2,6],[2,7],[3,5],[3,6],[3,7]]:
 		return 't6'
-	elif loc_grid in [[5,10],[6,10],[7,10],[5,9],[6,9],[7,9]]:
+	elif pos in [[5,10],[6,10],[7,10],[5,9],[6,9],[7,9]]:
 		return 't7'
-	elif loc_grid in [[2,10],[3,10],[4,10],[2,9],[3,9],[4,9],[2,8],[3,8],[4,8]]:
+	elif pos in [[2,10],[3,10],[4,10],[2,9],[3,9],[4,9],[2,8],[3,8],[4,8]]:
 		return 't8'
 
 def White_Lotus_Check(Pieces,current_piece,start_loc,end_loc):
@@ -159,18 +141,18 @@ def White_Lotus_Check(Pieces,current_piece,start_loc,end_loc):
 	return True
 
 #Checks to see if a location is gaurded by sheild
-def Gaurded(loc,Pieces,current_player):
+def Gaurded(pos,Pieces,current_player):
 	for piece in Pieces:
 		if piece.name=='Sheild':
 			if piece.loc_type in ['draft','hand']:
 				return False
-			sheild_pos=Loc_To_Cell(piece.loc)
+			sheild_pos=piece.pos
 			sheild_controller=piece.controller
-	gaurded_locs=[]
+	gaurded_poss=[]
 	for offset in [[1,1],[-1,1],[1,-1],[-1,-1]]:
-		gaurded_locs.append(Cell_To_Pix(sheild_pos[0]+offset[0],sheild_pos[1]+offset[1],'ul'))
+		gaurded_poss.append([sheild_pos[0]+offset[0],sheild_pos[1]+offset[1]])
 	for piece in Pieces:
-		if piece.loc==loc and (loc in gaurded_locs) and current_player!=sheild.controller:
+		if piece.pos==pos and (pos in gaurded_poss) and current_player!=sheild.controller:
 			return True
 	return False
 
@@ -179,14 +161,13 @@ def Frozen(current_piece,Pieces):
 		if piece.name == 'Ice':
 			if piece.loc_type in ['draft','hand']:
 				return False
-			ice_pos = Loc_To_Cell(piece.loc)
-	pos = Loc_To_Cell(current_piece.loc)
+			ice_pos = piece.pos
 	for offset in [[1,0],[1,1],[1,-1],[-1,0],[-1,1],[-1,-1],[0,1],[0,-1]]:
-		if pos == [ice_pos[0]+offset[0],ice_pos[1]+offset[1]]:
+		if current_piece.pos == [ice_pos[0]+offset[0],ice_pos[1]+offset[1]]:
 			return True
 	return False
 
-def By_Portal(loc,piece,Pieces):
+def By_Portal(pos,piece,Pieces):
 	for piece in Pieces:
 		if piece.name =='Portal':
 			if piece.loc_type in ['draft','hand']:
@@ -194,27 +175,26 @@ def By_Portal(loc,piece,Pieces):
 			if piece.controller!=piece.controller:
 				print 'false returned because you dont controll the portal'
 				return False
-			portal_pos = Loc_To_Cell(piece.loc)
-	pos = Loc_To_Cell(loc)
+			portal_pos = piece.pos
 	for offset in [[1,1],[1,0],[1,-1],[-1,1],[-1,0],[-1,-1],[0,1],[0,-1]]:
 		if pos == [portal_pos[0]+offset[0],portal_pos[1]+offset[1]]:
 			return True
 	return False
 
 #Deals with drafting
-def draft_action(current_piece,current_player,Pieces):
+def draft_action(current_piece,current_player,Pieces,Board):
 	print 'You have entered draft mode'
 	current_piece.select()
 	pieces_to_draft = [current_piece]
 	hand = []
 	for piece in Pieces:
 		if piece.controller == current_player and piece.loc_type=='hand':
-			hand.append(Pix_To_Hand(piece.loc))
+			hand.append(Pix_To_Hand(piece.loc,Board.cell_dim))
 	while True:
 		#Check to see if you are done draftting
 		if len(pieces_to_draft)==min(3,7-len(hand)):
 			for piece in pieces_to_draft:
-				piece.draft(current_player,Pieces)
+				piece.draft(current_player,Pieces,Board)
 			return True
 		#Respond to key presses
 		for event in pg.event.get():
@@ -223,19 +203,19 @@ def draft_action(current_piece,current_player,Pieces):
 			elif event.type == pg.KEYDOWN:
 				if event.key == pg.K_ESCAPE:
 					for piece in pieces_to_draft:
-						piece.unselect(Pieces)
+						piece.unselect(Pieces,Board)
 					return False
 			elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
 				current_piece = None
 				mouse_pos = pg.mouse.get_pos()
 				current_piece = Get_Current_Piece(mouse_pos,Pieces)
 				if current_piece!= None:
-					if current_piece.legal_draft(current_player,pieces_to_draft,Pieces):
+					if current_piece.legal_draft(current_player,pieces_to_draft,Pieces,Board):
 						current_piece.select()
 						pieces_to_draft.append(current_piece)
 
 #Deals with placing a piece
-def place_action(current_piece,current_player,Pieces,Turn_Indicator):
+def place_action(current_piece,current_player,Pieces,Board):
 	print 'You have entered place mode'
 	current_piece.select()
 	while True:
@@ -245,91 +225,91 @@ def place_action(current_piece,current_player,Pieces,Turn_Indicator):
 				quit()
 			elif event.type == pg.KEYDOWN:
 				if event.key == pg.K_ESCAPE:
-					current_piece.unselect(Pieces)
+					current_piece.unselect(Pieces,Board)
 					return False
 			elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
 				mouse_pos = pg.mouse.get_pos()
-				loc = Loc_To_UL(mouse_pos)
-				if current_piece.legal_place(loc,Turn_Indicator,Pieces):
-					current_piece.place(loc,Pieces)
+				loc = Loc_To_UL(mouse_pos,Board)
+				print 'You have selected loc: '+str(loc)
+				if current_piece.legal_place(loc,Board,Pieces):
+					current_piece.place(loc,Pieces,Board)
 					return True
 
 #enact the move/ability action after a piece has been selected
-def move_ability_action(current_piece,current_player,Pieces,Turn_Indicator,pop_up):
-	from Images.Board_Display import Board
+def move_ability_action(current_piece,current_player,Pieces,Board):
 	print 'Now entering move mode for player ' + str(current_player)
 	current_piece.select()
 	if current_piece.ability_type == 'a':
-		pop_up.configure('move or use your ability?','move','ability')
-		answer = pop_up.ask()
+		Board.configure_PU('move or use your ability?','move','ability')
+		answer = Board.ask_PU()
 		if 'ability'==answer:
-			return ability_action(current_piece,current_player,Pieces,Turn_Indicator,pop_up)
+			return ability_action(current_piece,current_player,Pieces,Board)
 		elif 'move'==answer:
-			return move_action(current_piece,current_player,Pieces,Turn_Indicator)
+			return move_action(current_piece,current_player,Pieces,Board)
 		else:
-			current_piece.unselect(Pieces)
+			current_piece.unselect(Pieces,Board)
 			return False
 	elif current_piece.ability_type == 'p':
-		return move_action(current_piece,current_player,Pieces,Turn_Indicator)
+		return move_action(current_piece,current_player,Pieces,Board)
 	elif current_piece.ability_type =='ma':
-		pop_up.configure('Do you wish to move?','yes','no')
-		answer = pop_up.ask()
+		Board.configure_PU('Do you wish to move?','yes','no')
+		answer = Board.ask_PU()
 		if answer=='yes':
-			if False == move_action(current_piece,current_player,Pieces,Turn_Indicator):
-				current_piece.unselect(Pieces)
+			if False == move_action(current_piece,current_player,Pieces,Board):
+				current_piece.unselect(Pieces,Board)
 				return False
-			pg.display.get_surface().blit(Board,[0,0])
+			Board.update()
 			current_piece.select()
 			Pieces.update()
 			pg.display.flip()
-		pop_up.configure('Use your ability?','yes','no')
-		answer = pop_up.ask()
+		Board.configure_PU('Use your ability?','yes','no')
+		answer = Board.ask_PU()
 		if answer == 'yes':
-			ability_action(current_piece,current_player,Pieces,Turn_Indicator,pop_up)
+			ability_action(current_piece,current_player,Pieces,Board)
 			return True
 		else:
-			current_piece.unselect(Pieces)
+			current_piece.unselect(Pieces,Board)
 			return True
 	elif current_piece.ability_type =='am':
-		pop_up.configure('Use your ability?','yes','no')
-		answer = pop_up.ask()
+		Board.configure_PU('Use your ability?','yes','no')
+		answer = Board.ask_PU()
 		if answer == 'yes':
-			if ability_action(current_piece,current_player,Pieces,Turn_Indicator,pop_up)==False:
-				current_piece.unselect(Pieces)
+			if ability_action(current_piece,current_player,Pieces,Board)==False:
+				current_piece.unselect(Pieces,Board)
 				return False
 			current_piece.select()
-			pg.display.get_surface().blit(Board,[0,0])
+			Board.update()
 			Pieces.update()
 			pg.display.flip()
 		#ask if you wish to move
-		pop_up.configure('Do you wish to move?','yes','no')
-		answer = pop_up.ask()
+		Board.configure_PU('Do you wish to move?','yes','no')
+		answer = Board.ask_PU()
 		if answer == 'yes':
-			move_action(current_piece,current_player,Pieces,Turn_Indicator)
+			move_action(current_piece,current_player,Pieces,Board)
 			return True
 		else:
-			current_piece.unselect(Pieces)
+			current_piece.unselect(Pieces,Board)
 			return True
 
-def move_action(current_piece,current_player,Pieces,Turn_Indicator):
+def move_action(current_piece,current_player,Pieces,Board):
 	while True:
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
 				quit()
 			elif event.type == pg.KEYDOWN:
 				if event.key == pg.K_ESCAPE:
-					current_piece.unselect(Pieces)
+					current_piece.unselect(Pieces,Board)
 					return False
 			elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
 				mouse_pos = pg.mouse.get_pos()
-				loc = Loc_To_UL(mouse_pos)
-				if current_piece.legal_move(loc,Turn_Indicator,Pieces):
-					current_piece.move(loc,Pieces)
+				loc = Loc_To_UL(mouse_pos,Board)
+				if current_piece.legal_move(loc,Board,Pieces):
+					current_piece.move(loc,Pieces,Board)
 					return True
 
-def ability_action(current_piece,current_player,Pieces,Turn_Indicator,pop_up):
-	if current_piece.legal_ability(Pieces,Turn_Indicator):
-		return current_piece.ability(Pieces,Turn_Indicator,pop_up)
+def ability_action(current_piece,current_player,Pieces,Board):
+	if current_piece.legal_ability(Pieces,Board):
+		return current_piece.ability(Pieces,Board)
 	else:
-		current_piece.unselect(Pieces)
+		current_piece.unselect(Pieces,Board)
 		return False

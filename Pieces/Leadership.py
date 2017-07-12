@@ -1,11 +1,10 @@
 import pygame as pg
 
-from Functions.Piece_Class import Piece,bishop_move
-from Functions.Game_Functions import Draft_To_Pix,Is_Adjacent,move_ability_action,Get_Current_Piece
-from Images.Piece_images import draw_text_piece
+from Functions.Piece_Class import Piece
+from Functions.Game_Functions import Is_Adjacent,move_ability_action,Get_Current_Piece
 
 class Leadership(Piece):
-	def legal_ability(self,Pieces,Turn_Indicator):
+	def legal_ability(self,Pieces,Board):
 		legal=False
 		for piece in Pieces:
 			if piece.controller ==self.controller and not piece.loc_type in ['hand','draft']:
@@ -14,7 +13,7 @@ class Leadership(Piece):
 			return False
 		return Piece.legal_ability(self,Pieces,Turn_Indicator)
 
-	def ability(self,Pieces,Turn_Indicator,pop_up):
+	def ability(self,Pieces,Board):
 		self.active = True
 		while True:
 			for event in pg.event.get():
@@ -32,6 +31,3 @@ class Leadership(Piece):
 							if move_ability_action(current_piece,self.controller,Pieces,Turn_Indicator,pop_up):
 								self.unselect(Pieces)
 								return True
-leadership_move = 'Movement: Two spaces in any diagonal direction'
-leadership_ability = 'Ability: Can give its turn to any allied piece'
-Leadership = Leadership('Leadership',draw_text_piece('Ldr',(96,96,96)),Draft_To_Pix([1,2]),bishop_move,True,'a',leadership_move,leadership_ability)

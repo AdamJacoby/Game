@@ -1,30 +1,29 @@
 import pygame as pg
 
 #Custom scripts
-from Images.Piece_images import draw_text_piece
-from Functions.Piece_Class import Piece,knight_move
+from Functions.Piece_Class import Piece
 from Functions.Game_Functions import Get_Current_Piece,White_Lotus_Check,Draft_To_Pix
 
 
 class Leaf(Piece):
 
-	def legal_ability(self,Pieces,Turn_Indicator):
+	def legal_ability(self,Pieces,Board):
 		temp = False
 		for piece in Pieces:
 			if piece.controller == self.controller and not(piece.loc_type in ['draft','hand','goal','nutral_zone']):
 				temp = True
 		if temp ==False:
 			return False
-		return Piece.legal_ability(self,Pieces,Turn_Indicator)
+		return Piece.legal_ability(self,Pieces,Board)
 
-	def ability(self,Pieces,Turn_Indicator,*args):
+	def ability(self,Pieces,Board,*args):
 		while True:
 			for event in pg.event.get():
 				if event.type == pg.QUIT:
 					quit()
 				elif event.type == pg.KEYDOWN:
 					if event.key == pg.K_ESCAPE:
-						self.unselect(Pieces)
+						self.unselect(Pieces,Board)
 						return False
 				elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
 					mouse_pos = pg.mouse.get_pos()
@@ -35,10 +34,6 @@ class Leaf(Piece):
 							temp_loc = self.loc
 							self.loc=current_piece.loc
 							self.loc_type=current_piece.loc_type
-							current_piece.move(temp_loc,Pieces)
-							self.unselect(Pieces)
+							current_piece.move(temp_loc,Pieces,Board)
+							self.unselect(Pieces,Board)
 							return True
-
-leaf_move = 'Movement: Knight moves'
-leaf_ability = 'Ability: Before moving can swap places with any allied piece'
-Leaf = Leaf('Leaf',draw_text_piece('Lf',(96,96,96)),Draft_To_Pix([3,3]),knight_move,False,'am',leaf_move,leaf_ability)

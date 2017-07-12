@@ -13,6 +13,3 @@ class Freedom(Piece):
 		if Find_Zone(loc) in ['nutral_zone','goal']:
 			out = False
 		return out
-freedom_move = 'Movement: Two space in vertical and horizontal directions'
-freedom_ability = 'Ability: Can be placed in territories'
-Freedom = Freedom('Freedom',draw_text_piece('Fre',(96,96,96)),Draft_To_Pix([5,3]),rook_move,True,'p',freedom_move,freedom_ability)

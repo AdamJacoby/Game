@@ -1,4 +1,5 @@
 import pygame as pg
+from math import ceil, floor
 White=(255,255,255)
 Black=(0,0,0)
 Red=(255,0,0)
@@ -7,54 +8,22 @@ Grey=(96,96,96)
 
 pg.font.init()
 
-def draw_piece_base(color):
-	surface = pg.Surface([71,71])
+def draw_piece_base(color,cell_dim):
+	surface = pg.Surface([cell_dim,cell_dim])
 	surface.fill(White)
-	pg.draw.circle(surface, color, [36,36], 30)
+	pg.draw.circle(surface, color, [int(ceil(float(cell_dim)/2)),int(ceil(float(cell_dim)/2))], int(ceil(3*float(cell_dim)/7)))
 	surface.set_colorkey(White)
 	return surface
 
-def draw_rook(color):
-	surface = draw_piece_base(color)
-	pg.draw.line(surface, Black, [36,66], [36,6],3)
-	pg.draw.line(surface, Black, [6,36], [66,36],3)
-	return surface
-
-def draw_pawn(color):
-	surface = draw_piece_base(color)
-	pg.draw.line(surface, Black, [36,51], [36,21],3)
-	pg.draw.line(surface, Black, [21,36], [51,36],3)
-	pg.draw.line(surface, Black, [36+11,36+11], [36-11,36-11],3)
-	pg.draw.line(surface, Black, [36-11,36+11], [36+11,36-11],3)
-	return surface
-
-def draw_bishop(color):
-	surface = draw_piece_base(color)
-	pg.draw.line(surface, Black, [36+21,36+21], [36-21,36-21],3)
-	pg.draw.line(surface, Black, [36-21,36+21], [36+21,36-21],3)
-	return surface
-
-def draw_knight(color):
-	surface = draw_piece_base(color)
-	pg.draw.line(surface, Black, [36+24,36], [36-24,36],3)
-	pg.draw.line(surface, Black, [36,36+24], [36,36-24],3)
-	pg.draw.line(surface, Black, [36+24,36+14], [36+24,36-14],3)
-	pg.draw.line(surface, Black, [36-24,36+14], [36-24,36-14],3)
-	pg.draw.line(surface, Black, [36+14,36+24], [36-14,36+24],3)
-	pg.draw.line(surface, Black, [36+14,36-24], [36-14,36-24],3)
-	return surface
-
-def draw_queen(color):
-	surface = draw_piece_base(color)
-	pg.draw.line(surface, Black, [36+21,36+21], [36-21,36-21],3)
-	pg.draw.line(surface, Black, [36-21,36+21], [36+21,36-21],3)
-	pg.draw.line(surface, Black, [36,66], [36,6],3)
-	pg.draw.line(surface, Black, [6,36], [66,36],3)
-	return surface
-
-def draw_text_piece(text,color):
-	surface = draw_piece_base(color)
-	text = pg.font.SysFont('Comic Sans MS', 30).render(text,False,(0,0,0),(255,255,255))
+def draw_text_piece(text,color,cell_dim):
+	surface = draw_piece_base(color,cell_dim)
+	text_height=0
+	i=1
+	while text_height<floor(float(cell_dim)/4):
+		font = pg.font.SysFont('Comic Sans MS', i)
+		text_height = font.render('text',False,(0,0,0),(255,255,255)).get_height()
+		i=i+1
+	text = font.render(text,False,(0,0,0),(255,255,255))
 	text.set_colorkey((255,255,255))
-	surface.blit(text,[round(float((71-text.get_width()))/2),round(float(72-(text.get_height()))/2)])
+	surface.blit(text,[round(float((cell_dim-text.get_width()))/2),round(float(cell_dim-(text.get_height()))/2)])
 	return surface
