@@ -20,6 +20,7 @@ class Board(Sprite):
 			self.font = pg.font.SysFont('Comic Sans MS', i)
 			text_height = self.font.render('text',False,(0,0,0),(255,255,255)).get_height()
 			i=i+1
+		self.font_size=i
 		x = int(round(float(width)/4))
 		y = int(round(float(width)/8))
 		self.button_x = int(round(float(width)/16))
@@ -126,4 +127,10 @@ class Board(Sprite):
 	def update_TS(self):
 		pg.display.get_surface().blit(self.background_TS,self.loc_TS)
 		pg.display.get_surface().blit(self.surface_TS,[self.loc_TS[0],self.loc_TS[1]])
+
+	def input_turn_number(self,turn_number):
+		self.turn = turn_number
+
+	def load(self,turn_number):
+		self.turn_number =turn_number%16
 

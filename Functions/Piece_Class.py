@@ -38,7 +38,7 @@ class Piece(Sprite):
 		width = pg.display.get_surface().copy().get_width()
 		saved_surface = pg.display.get_surface().copy()
 		pg.display.get_surface().fill((255,255,255))
-		total_hegith = multiline_text(self.font,self.move_text, pg.display.get_surface(),[int(round(float(width)/10)),int(round(float(height)/10))])
+		total_hegith = multiline_text(Board.font,self.move_text, pg.display.get_surface(),[int(round(float(width)/10)),int(round(float(height)/10))])
 		multiline_text(Board.font,self.ability_text, pg.display.get_surface(),[int(round(width/10))
 			,int(round(float(height)/10+total_hegith+float(height)/10))])
 		pg.display.flip()
@@ -193,6 +193,17 @@ class Piece(Sprite):
 		if Frozen(self,Pieces):
 			return False
 		return True
+
+	def load(self,piece_info):
+		self.loc=piece_info[self.name+'_loc']
+		self.pos=piece_info[self.name+'_pos']
+		self.loc_type = piece_info[self.name+'_loc_type']
+		self.controller = piece_info[self.name+'_controller']
+		if self.controller!=None:
+			temp = pg.PixelArray(self.surface)
+			temp.replace((96,96,96),(255-255*self.controller,0,255*self.controller))
+			self.surface = temp.make_surface()
+			self.surface.set_colorkey(White)
 
 #Create rooks
 rook_move =[]

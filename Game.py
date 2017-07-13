@@ -1,6 +1,7 @@
 import os, sys
 import pygame as pg
 
+from Functions.Save_Functions import *
 
 #Set up resolution options
 from Functions.UI_tools import *
@@ -108,9 +109,19 @@ mirror_ability = 'When placed place a coppy of mirror on any adjacent square'
 Mirror = Mirror('Mirror',draw_text_piece('Mir',(96,96,96),cell_dim),Draft_To_Pix([1,4],Board),pawn_move,False,'p',mirror_move,mirror_ability,Board)
 Mirror_dupe = Mirror_dupe('Mirror Dupe',draw_text_piece('Mir',(96,96,96),cell_dim),Draft_To_Pix([1,4],Board),pawn_move,False,'p',mirror_move,mirror_ability,Board)
 
-#Create the board
 Pieces = pg.sprite.Group(Power,Balance,White_Loctus,Leadership,Wind,Moon,Chaos,Sun,
 	Wood,Rock,Leaf,Sheild,Freedom,Shadow,Portal,Mirror,Fire,Ice,Infinity,Water,Mirror_dupe)
+#Start new save file or load from save
+file_type=raw_input('Load Game or New Game:')
+
+if file_type.lower() in ['new','new game']:
+	save_dict = New_Save()
+elif file_type.lower() in ['load','load game']:
+	game_number=raw_input('Input game number:')
+	[piece_info,save_dict] = Load(int(game_number))
+	for piece in Pieces:
+		piece.load(piece_info)
+	Board.load(save_dict['turn number'])
 
 Board.update()
 Pieces.update()
@@ -123,7 +134,6 @@ Zones = ['place_zone','t1','t2','t3','t4','t5','t6','t7','t8','nutral_zone','goa
 done = True
 finished = False
 clock = pg.time.Clock()
-current_turn = 0
 current_piece = None
 
 while not finished:
@@ -242,6 +252,9 @@ while not finished:
 	#Refresh screen at the end of that phase
 	
 	Board.next_turn()
+	save_dict['turn number']=save_dict['turn number']+1
 	Board.update()
 	Pieces.update()
 	pg.display.flip()
+
+	Save(Pieces,save_dict)
