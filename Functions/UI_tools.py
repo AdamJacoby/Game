@@ -134,3 +134,43 @@ class Board(Sprite):
 	def load(self,turn_number):
 		self.turn_number =turn_number%16
 
+def Get_Number(text):
+	font=pg.font.SysFont('Comic Sans MS', 12)
+	question = font.render(text,False,(0,0,0),(255,255,255))
+	screen = pg.display.set_mode([500,200])
+	screen.fill((255,255,255))
+	number = ''
+	while True:
+		for event in pg.event.get():
+			if event.type == pg.QUIT:
+				quit()
+			elif event.type == pg.KEYDOWN:
+				if event.key == pg.K_0:
+					number = number+'0'
+				elif event.key == pg.K_1:
+					number = number+'1'
+				elif event.key == pg.K_2:
+					number = number+'2'
+				elif event.key == pg.K_3:
+					number = number+'3'
+				elif event.key == pg.K_4:
+					number = number+'4'
+				elif event.key == pg.K_5:
+					number = number+'5'
+				elif event.key == pg.K_6:
+					number = number+'6'
+				elif event.key == pg.K_7:
+					number = number+'7'
+				elif event.key == pg.K_8:
+					number = number+'8'
+				elif event.key == pg.K_9:
+					number = number+'9'
+				elif event.key == pg.K_BACKSPACE:
+					number = number[0:-1]
+				elif event.key == pg.K_RETURN:
+					return int(number)
+		number_text = font.render(number,False,(0,0,0),(255,255,255))
+		screen.fill((255,255,255))
+		screen.blit(question,[175,50])
+		screen.blit(number_text,[230,150])
+		pg.display.flip()

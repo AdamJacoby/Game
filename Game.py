@@ -1,11 +1,15 @@
 import os, sys
 import pygame as pg
+import pymongo
+
+#client = pymongo.MongoClient()
+client = None
 
 from Functions.Save_Functions import *
 
 #Set up resolution options
 from Functions.UI_tools import *
-width=input('Input horizontal resolution:')
+width=Get_Number('Input Horizontal Resolution')
 cell_dim = int(ceil(2*round((float(width)/2-11)/11)+1)/2)
 height = 11*cell_dim+11
 screen = pg.display.set_mode([width,height])
@@ -112,13 +116,13 @@ Mirror_dupe = Mirror_dupe('Mirror Dupe',draw_text_piece('Mir',(96,96,96),cell_di
 Pieces = pg.sprite.Group(Power,Balance,White_Loctus,Leadership,Wind,Moon,Chaos,Sun,
 	Wood,Rock,Leaf,Sheild,Freedom,Shadow,Portal,Mirror,Fire,Ice,Infinity,Water,Mirror_dupe)
 #Start new save file or load from save
-file_type=raw_input('Load Game or New Game:')
-
-if file_type.lower() in ['new','new game']:
-	save_dict = New_Save()
-elif file_type.lower() in ['load','load game']:
-	game_number=raw_input('Input game number:')
-	[piece_info,save_dict] = Load(int(game_number))
+Board.configure_PU('Load Game or New Game','Load','New')
+file_type = Board.ask_PU()
+if file_type =='New':
+	save_dict = New_Save(client)
+elif file_type == 'Load':
+	game_number=Get_Number('Input game file number:')
+	[piece_info,save_dict] = Load(int(game_number),client)
 	for piece in Pieces:
 		piece.load(piece_info)
 	Board.load(save_dict['turn number'])
@@ -257,4 +261,4 @@ while not finished:
 	Pieces.update()
 	pg.display.flip()
 
-	Save(Pieces,save_dict)
+	Save(Pieces,save_dict,client)
